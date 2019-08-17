@@ -29,7 +29,6 @@ function Get-NestedDistributionGroupMember
                    Position=0)]
         [String]
         $Identity,
-
         # The ResultSize parameter specifies the maximum number of results to return. If you want to return all requests that match the query, use unlimited for the value of this parameter. The default value is 1000
         [Parameter(Mandatory=$false,
                    ValueFromPipelineByPropertyName=$false,
@@ -43,120 +42,144 @@ function Get-NestedDistributionGroupMember
                 $true
             }
             Else{
-                Throw "ResultSize is limited to 9999, if you want to return all results that match the query, use unlimited for the value of this parameter."
+                Write-Warning "ResultSize is limited to 9999, if you want to return all results that match the query, use unlimited for the value of this parameter."
             }
         })]
         [string]
-        $ResultSize
+        $ResultSize=1000,
+        # The ListGroups parameter is a switch that can be used to display all of the nested distribution groups in a distribuition group. The Default Value is $false.
+        [switch]
+        $ListGroups
 
     )
     Begin
     {
         Write-Verbose "ENTER - BEGIN BLOCK"
-        Write-Verbose "Create required variables"
+        Write-Verbose "Create User, Group and GroupList variables"
         [System.Collections.ArrayList]$User = @()
         [System.Collections.ArrayList]$Group = @()
+        [System.Collections.ArrayList]$GroupList = @()
+        $GetDistributionGroup = @{
+            Identity    = $Identity
+            ResultSize  = $ResultSize
+        }
         Write-Verbose "EXIT - BEGIN BLOCK"
     }
     Process
     {
         Write-Verbose "ENTER - PROCESS BLOCK"
-        Foreach($Member in (Get-DistributionGroupMember -Identity $Identity -ResultSize $ResultSize)){
-            If ($Member.RecipientTypeDetails -eq 'UserMailbox'){
-                If (!($User -contains $Member.PrimarySMTPAddress)){
-                    $User.Add($Member) | Out-Null
+        Write-Verbose "ENTER - Foreach - $Identity"
+        Foreach ($Member in (Get-DistributionGroupMember @GetDistributionGroup)){
+            switch ($Member.RecipientType) {
+                MailUniversalDistributionGroup {
+                    Write-Verbose "Nested Distribution Group Identified: $($Member.DisplayName)"
+                    If ($Member.DistinguishedName -notin $Group) {
+                        $Group.Add($Member) | Out-Null
+                        IF ($ListGroups) {
+                            $GroupList.Add($Member) | Out-Null
+                        }
+                    }
+                    Else {
+                        Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                    }
                 }
-                Else{
-                    Write-Verbose "$Member is already added to the user list, skipping to mitigate duplicate entry"
+                MailUniversalSecurityGroup {
+                    Write-Verbose "Nested Mail-Enabled Security Group identified: $($Member.DisplayName)"
+                    If ($Member.DistinguishedName -notin $Group){
+                        $Group.Add($Member) | Out-Null
+                        IF ($ListGroups) {
+                            $GroupList.Add($Member) | Out-Null
+                        }
+                    }
+                    Else{
+                        Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                    }
+                }
+                default{
+                    If ($Member.DistinguishedName -notin $User) {
+                        $User.Add($Member) | Out-Null
+                    }
+                    Else {
+                        Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                    }
                 }
             }
-            ElseIf ($Member.RecipientTypeDetails -eq 'MailUniversalDistributionGroup'){
-                Write-Verbose "Nested Distribution Group Identified: $Member"
-                If (!($Group -contains $Member.PrimarySMTPAddress)){
-                    $Group.Add($Member) | Out-Null
+        }
+        Write-Verbose "EXIT - Foreach - $Idenity"
+        Write-Verbose "ENTER - Do-While"
+        do {
+            If($Group.Count -gt 0){
+                $GetDistributionGroup = @{
+                    Identity    = $Group[0].DistinguishedName
+                    ResultSize  = $ResultSize
                 }
-                Else{
-                    Write-Verbose "$Member is already added to the group list, skipping to mitigate duplicate entry"
-                }
-            }
-            ElseIf ($Member.RecipientTypeDetails -eq 'MailUniversalSecurityGroup'){ 
-                Write-Verbose "Nested Mail-Enabled Security Group identified: $Member"
-                If (!($Group -contains $Member.PrimarySMTPAddress)){
-                    $Group.Add($Member) | Out-Null
-                }
-                Else{
-                    Write-Verbose "$Member is already added to the group list, skipping to mitigate duplicate entry"
-                }
-            }
-            Write-Verbose "Entry Do-While Loop"
-            do
-            {
-                If($Group.Count -gt 0){
-                    Write-Verbose "Start - Enumeration for members in $($Group[0])"
-                    Foreach($Member in (Get-DistributionGroupMember -Identity $Group[0].Identity -ResultSize $ResultSize)){
-                        If ($Member.RecipientTypeDetails -eq 'UserMailbox'){
-                            If (!($User -contains $Member.PrimarySMTPAddress)){
+                Write-Verbose "ENTER - Foreach - $($Group[0].DisplayName)"
+                Foreach ($Member in (Get-DistributionGroupMember @GetDistributionGroup)){
+                    switch ($Member.RecipientType) {
+                        MailUniversalDistributionGroup {
+                            Write-Verbose "Nested Distribution Group Identified: $($Member.DisplayName)"
+                            If ($Member.DistinguishedName -notin $Group) {
+                                $Group.Add($Member) | Out-Null
+                                IF ($ListGroups) {
+                                    $GroupList.Add($Member) | Out-Null
+                                }
+                            }
+                            Else {
+                                Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                            }
+                        }
+                        MailUniversalSecurityGroup {
+                            Write-Verbose "Nested Mail-Enabled Security Group identified: $($Member.DisplayName)"
+                            If ($Member.DistinguishedName -notin $Group){
+                                $Group.Add($Member) | Out-Null
+                                IF ($ListGroups) {
+                                    $GroupList.Add($Member) | Out-Null
+                                }
+                            }
+                            Else{
+                                Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                            }
+                        }
+                        default{
+                            If ($Member.DistinguishedName -notin $User) {
                                 $User.Add($Member) | Out-Null
                             }
-                            Else{
-                                Write-Verbose "$Member is already added to the user list, skipped to mitigate duplicate entry"
+                            Else {
+                                Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
                             }
                         }
-                        ElseIf ($Member.RecipientTypeDetails -eq 'MailUniversalDistributionGroup'){
-                            Write-Verbose "Nested Distribution Group Identified: $Member"
-                            If (!($Group -contains $Member.PrimarySMTPAddress)){
-                                $Group.Add($Member) | Out-Null
-                            }
-                            Else{
-                                Write-Verbose "$Member is already added to the group list, skipped to mitigate duplicate entry"
-                            }
-                        }
-                        ElseIf ($Member.RecipientTypeDetails -eq 'MailUniversalSecurityGroup'){ 
-                            Write-Verbose "Nested Mail-Enabled Security Group identified: $Member"
-                            If (!($Group -contains $Member.PrimarySMTPAddress)){
-                                $Group.Add($Member) | Out-Null
-                            }
-                            Else{
-                                Write-Verbose "$Member is already added to the group list, skipped to mitigate duplicate entry"
-                            }
-                        }
-                    }
-                    Write-Verbose "Exit - Enumerate members from identified Groups"
-                    Try{
-                        Write-Verbose "Remove $($Group[0].Identity) from Group list"
-                        $Group.Remove($Group[0])
-                    }
-                    Catch{
-                        Write-Verbose $_.exception.message
-                        Write-Warning $_.exception.message
                     }
                 }
+                Write-Verbose "EXIT - Foreach - $($Group[0].DisplayName)"
+                Try{
+                    Write-Verbose "Remove $($Group[0].Identity) from Group list"
+                    $Group.Remove($Group[0])
+                }
+                Catch{
+                    Write-Verbose $_.exception.message
+                    Write-Warning $_.exception.message
+                }
             }
-            While ($Group.Count -gt 0)
-            Write-Verbose "Exit Do-While Loop"
         }
-        If ($ResultSize -ne 'Unlimited'){
-            Write-Verbose "Enter - ResultSize - If statement"
-            Write-Verbose "ResultSize value: $ResultSize."
-            Write-Output $User[([int]$ResultSize)]
-            Write-Verbose "Exit - ResultSize - If Statement"
+        While ($Group.Count -gt 0)
+        Write-Verbose "EXIT - Do-While"
+        Write-Verbose "ENTER - Switch - ListGroup"
+        switch ($ListGroups) {
+            True {
+                Write-Output $GroupList
+            }
+            Default {
+                Write-Output $user
+            }
         }
-        Else{
-            Write-Verbose "Enter - ResultSize - If statement, else variant"
-            Write-Verbose "ResultSize value: $ResultSize."
-            Write-Output $User
-            Write-Verbose "Exit - ResultSize - If Statement, else variant"
-
-        }
+        Write-Verbose "EXIT - Switch - ListGroup"
         Write-Verbose "EXIT - PROCESS BLOCK"
-
     }
     End
     {
         Write-Verbose "ENTER - END BLOCK"
         Write-Verbose "Remove created variables"
-        Remove-Variable User
-        Remove-Variable Group
+        Remove-Variable User, Group, GroupList
         Write-Verbose "EXIT - END BLOCK"
     }
 }
