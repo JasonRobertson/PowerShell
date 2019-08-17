@@ -73,7 +73,7 @@ function Get-NestedDistributionGroupMember
             switch ($Member.RecipientType) {
                 MailUniversalDistributionGroup {
                     Write-Verbose "Nested Distribution Group Identified: $($Member.DisplayName)"
-                    If ($Member.DistinguishedName -notin $Group) {
+                    If ($Member.DistinguishedName -notin $Group.DistinguishedName) {
                         $Group.Add($Member) | Out-Null
                         IF ($ListGroups) {
                             $GroupList.Add($Member) | Out-Null
@@ -85,7 +85,7 @@ function Get-NestedDistributionGroupMember
                 }
                 MailUniversalSecurityGroup {
                     Write-Verbose "Nested Mail-Enabled Security Group identified: $($Member.DisplayName)"
-                    If ($Member.DistinguishedName -notin $Group){
+                    If ($Member.DistinguishedName -notin $Group.DistinguishedName){
                         $Group.Add($Member) | Out-Null
                         IF ($ListGroups) {
                             $GroupList.Add($Member) | Out-Null
@@ -96,7 +96,7 @@ function Get-NestedDistributionGroupMember
                     }
                 }
                 default{
-                    If ($Member.DistinguishedName -notin $User) {
+                    If ($Member.DistinguishedName -notin $User.DistinguishedName) {
                         $User.Add($Member) | Out-Null
                     }
                     Else {
@@ -108,57 +108,55 @@ function Get-NestedDistributionGroupMember
         Write-Verbose "EXIT - Foreach - $Idenity"
         Write-Verbose "ENTER - Do-While"
         do {
-            If($Group.Count -gt 0){
-                $GetDistributionGroup = @{
-                    Identity    = $Group[0].DistinguishedName
-                    ResultSize  = $ResultSize
-                }
-                Write-Verbose "ENTER - Foreach - $($Group[0].DisplayName)"
-                Foreach ($Member in (Get-DistributionGroupMember @GetDistributionGroup)){
-                    switch ($Member.RecipientType) {
-                        MailUniversalDistributionGroup {
-                            Write-Verbose "Nested Distribution Group Identified: $($Member.DisplayName)"
-                            If ($Member.DistinguishedName -notin $Group) {
-                                $Group.Add($Member) | Out-Null
-                                IF ($ListGroups) {
-                                    $GroupList.Add($Member) | Out-Null
-                                }
-                            }
-                            Else {
-                                Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+            $GetDistributionGroup = @{
+                Identity    = $Group[0].DistinguishedName
+                ResultSize  = $ResultSize
+            }
+            Write-Verbose "ENTER - Foreach - $($Group[0].DisplayName)"
+            Foreach ($Member in (Get-DistributionGroupMember @GetDistributionGroup)){
+                switch ($Member.RecipientType) {
+                    MailUniversalDistributionGroup {
+                        Write-Verbose "Nested Distribution Group Identified: $($Member.DisplayName)"
+                        If ($Member.DistinguishedName -notin $Group.DistinguishedName) {
+                            $Group.Add($Member) | Out-Null
+                            IF ($ListGroups) {
+                                $GroupList.Add($Member) | Out-Null
                             }
                         }
-                        MailUniversalSecurityGroup {
-                            Write-Verbose "Nested Mail-Enabled Security Group identified: $($Member.DisplayName)"
-                            If ($Member.DistinguishedName -notin $Group){
-                                $Group.Add($Member) | Out-Null
-                                IF ($ListGroups) {
-                                    $GroupList.Add($Member) | Out-Null
-                                }
-                            }
-                            Else{
-                                Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                        Else {
+                            Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                        }
+                    }
+                    MailUniversalSecurityGroup {
+                        Write-Verbose "Nested Mail-Enabled Security Group identified: $($Member.DisplayName)"
+                        If ($Member.DistinguishedName -notin $Group.DistinguishedName){
+                            $Group.Add($Member) | Out-Null
+                            IF ($ListGroups) {
+                                $GroupList.Add($Member) | Out-Null
                             }
                         }
-                        default{
-                            If ($Member.DistinguishedName -notin $User) {
-                                $User.Add($Member) | Out-Null
-                            }
-                            Else {
-                                Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
-                            }
+                        Else{
+                            Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
+                        }
+                    }
+                    default{
+                        If ($Member.DistinguishedName -notin $User.DistinguishedName) {
+                            $User.Add($Member) | Out-Null
+                        }
+                        Else {
+                            Write-Verbose "$($Member.DisplayName) is already identified, skipping to mitigate duplicate entry"
                         }
                     }
                 }
-                Write-Verbose "EXIT - Foreach - $($Group[0].DisplayName)"
-                Try{
-                    Write-Verbose "Remove $($Group[0].Identity) from Group list"
-                    $Group.Remove($Group[0])
-                }
-                Catch{
-                    Write-Verbose $_.exception.message
-                    Write-Warning $_.exception.message
-                }
+            }
+            Write-Verbose "EXIT - Foreach - $($Group[0].DisplayName)"
+            Try{
+                Write-Verbose "Remove $($Group[0].Identity) from Group list"
+                $Group.Remove($Group[0])
+            }
+            Catch{
+                Write-Verbose $_.exception.message
+                Write-Warning $_.exception.message
             }
         }
         While ($Group.Count -gt 0)
