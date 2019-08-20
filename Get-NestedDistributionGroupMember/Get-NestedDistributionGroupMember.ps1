@@ -1,16 +1,64 @@
 function Get-NestedDistributionGroupMember
 {
 <#
-.Synopsis
-   Get-NestedDistributionGroupMember cmdlet is used to pull all members of a parent distribution group that includes nested distirbution groups.
-.DESCRIPTION
-      Get-NestedDistributionGroupMember cmdlet is used to pull all members of a parent distribution group that includes nested distirbution groups.
-.EXAMPLE
-   PS C:\> Get-DistributionGroup all | Get-NestedDistributionGroupMember
+    .Synopsis
+    Get-NestedDistributionGroupMember cmdlet is used to pull all members of a parent distribution group that includes nested distirbution groups.
+    .DESCRIPTION
+    Get-NestedDistributionGroupMember cmdlet is used to pull all members of a parent distribution group that includes nested distirbution groups.
+    .EXAMPLE
+    PS C:\>  Get-NestedDistributionGroupMember -Identity Parent-DG
 
-   This example shows the user confirming the distribution group exists and piping the values to Get-NestedDistributionGroup.
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Name            RecipientType
+    ----            -------------
+    SharedMailbox14 UserMailbox
+    SharedMailbox22 UserMailbox
+    SharedMailbox23 UserMailbox
+    SharedMailbox48 UserMailbox
+    SharedMailbox78 UserMailbox
+    SharedMailbox85 UserMailbox
+
+    This example show the cmdlet being used with no additonal parameters, but Identity
+    .EXAMPLE
+    PS C:\> Get-DistributionGroup Parent-DG | Get-NestedDistributionGroupMember
+
+    Name            RecipientType
+    ----            -------------
+    SharedMailbox14 UserMailbox
+    SharedMailbox22 UserMailbox
+    SharedMailbox23 UserMailbox
+    SharedMailbox48 UserMailbox
+    SharedMailbox78 UserMailbox
+    SharedMailbox85 UserMailbox
+    SharedMailbox94 UserMailbox
+    SharedMailbox08 UserMailbox
+
+    This example show using the Get-DsitributionGroup cmdlet to verify the distirbution group exists and piping the results to Get-NestedDistributionGroup
+    .EXAMPLE
+    PS C:\>  Get-NestedDistributionGroupMember -Identity Parent-DG -ListGroups
+
+    Name       RecipientType
+    ----       -------------
+    Child-DG01 MailUniversalDistributionGroup
+    Child-DG06 MailUniversalDistributionGroup
+    Child-DG03 MailUniversalDistributionGroup
+    Child-DG05 MailUniversalDistributionGroup
+    Child-DG07 MailUniversalDistributionGroup
+
+    This example shows the use of the ListGroups switch to provide the list of the nested distribution groups instead of the users.
+    .EXAMPLE
+    PS C:\> Get-NestedDistributionGroupMember -Identity Parent-DG -ResultSize 10
+    WARNING: There are more results available than are currently displayed. To view them, increase the value for the ResultSize parameter.
+
+    Name            RecipientType
+    ----            -------------
+    SharedMailbox14 UserMailbox
+    SharedMailbox22 UserMailbox
+    SharedMailbox23 UserMailbox
+    SharedMailbox48 UserMailbox
+    SharedMailbox78 UserMailbox
+    SharedMailbox85 UserMailbox
+
+    This example shows the use of using the Resultsize to limit the output to desired size. The default ResultSize is 1000.
 #>
     [CmdletBinding()]
     [Alias()]
@@ -35,10 +83,7 @@ function Get-NestedDistributionGroupMember
                    Position=1)]
         [ValidateScript(
         {
-            IF($_ -match "^\d[0-9]{0,3}$"){
-                $true
-            }
-            ElseIf($_ -match "Unlimited"){
+            IF($_ -match "^\d[0-9]{0,3}$" -or $_ -match "Unlimited"){
                 $true
             }
             Else{
@@ -59,15 +104,16 @@ function Get-NestedDistributionGroupMember
         [System.Collections.ArrayList]$User = @()
         [System.Collections.ArrayList]$Group = @()
         [System.Collections.ArrayList]$GroupList = @()
-        $GetDistributionGroup = @{
-            Identity    = $Identity
-            ResultSize  = $ResultSize
-        }
+
         Write-Verbose "EXIT - BEGIN BLOCK"
     }
     Process
     {
         Write-Verbose "ENTER - PROCESS BLOCK"
+        $GetDistributionGroup = @{
+            Identity    = $Identity
+            ResultSize  = $ResultSize
+        }
         Write-Verbose "ENTER - Foreach - $Identity"
         Foreach ($Member in (Get-DistributionGroupMember @GetDistributionGroup)){
             switch ($Member.RecipientType) {
