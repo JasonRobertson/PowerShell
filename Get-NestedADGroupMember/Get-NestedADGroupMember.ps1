@@ -6,59 +6,59 @@ function Get-NestedADGroupMember
     .DESCRIPTION
     Get-NestedADGroupMember cmdlet is used to pull all members of a parent distribution group that includes nested distirbution groups.
     .EXAMPLE
-    PS C:\>  Get-NestedADGroupMember -Identity Parent-DG
+    PS C:\>  Get-NestedADGroupMember
 
-    Name            RecipientType
-    ----            -------------
-    SharedMailbox14 UserMailbox
-    SharedMailbox22 UserMailbox
-    SharedMailbox23 UserMailbox
-    SharedMailbox48 UserMailbox
-    SharedMailbox78 UserMailbox
-    SharedMailbox85 UserMailbox
+    distinguishedName : CN=User1,OU=Contractors,OU=contoso,DC=corp,DC=contoso,DC=com
+    name              : User1
+    objectClass       : user
+    objectGUID        : dfadhfq1-8744-3r98-qio1-904rtf7u8dfa
+    SamAccountName    : User1
+    SID               : S-1-5-21-4564564564-4564654564-783434173-41332
+
+    distinguishedName : CN=drtsslvpn.svc,OU=Service Accounts,DC=contoso,DC=com
+    name              : ServiceAccount1
+    objectClass       : user
+    objectGUID        : 4fab9dd5-f3ac-4910-a9be-8fdisvcajsjh
+    SamAccountName    : ServiceAccount1
+    SID               : S-1-5-21-4564564564-4564654564-121548578-484156
 
     This example show the cmdlet being used with no additonal parameters, but Identity
     .EXAMPLE
-    PS C:\> Get-DistributionGroup Parent-DG | Get-NestedADGroupMember
+    PS C:\> Get-ADGroup Administrators | Get-NestedADGroupMember
 
-    Name            RecipientType
-    ----            -------------
-    SharedMailbox14 UserMailbox
-    SharedMailbox22 UserMailbox
-    SharedMailbox23 UserMailbox
-    SharedMailbox48 UserMailbox
-    SharedMailbox78 UserMailbox
-    SharedMailbox85 UserMailbox
-    SharedMailbox94 UserMailbox
-    SharedMailbox08 UserMailbox
+    distinguishedName : CN=User1,OU=Contractors,OU=contoso,DC=corp,DC=contoso,DC=com
+    name              : User1
+    objectClass       : user
+    objectGUID        : dfadhfq1-8744-3r98-qio1-904rtf7u8dfa
+    SamAccountName    : User1
+    SID               : S-1-5-21-4564564564-4564654564-783434173-41332
+
+    distinguishedName : CN=drtsslvpn.svc,OU=Service Accounts,DC=contoso,DC=com
+    name              : ServiceAccount1
+    objectClass       : user
+    objectGUID        : 4fab9dd5-f3ac-4910-a9be-8fdisvcajsjh
+    SamAccountName    : ServiceAccount1
+    SID               : S-1-5-21-4564564564-4564654564-121548578-484156
 
     This example show using the Get-DsitributionGroup cmdlet to verify the distirbution group exists and piping the results to Get-NestedDistributionGroup
     .EXAMPLE
-    PS C:\>  Get-NestedADGroupMember -Identity Parent-DG -ListGroups
+    PS C:\>  Get-NestedADGroupMember -Identity Administrators -ListGroups
 
-    Name       RecipientType
-    ----       -------------
-    Child-DG01 MailUniversalDistributionGroup
-    Child-DG06 MailUniversalDistributionGroup
-    Child-DG03 MailUniversalDistributionGroup
-    Child-DG05 MailUniversalDistributionGroup
-    Child-DG07 MailUniversalDistributionGroup
+    distinguishedName : CN=Enterprise Admins,CN=Users,DC=contoso,DC=com
+    name              : Enterprise Admins
+    objectClass       : group
+    objectGUID        : fh348fda-fafd-2474-0kol-ti4568ug3y31
+    SamAccountName    : Enterprise Admins
+    SID               : S-1-5-21-4564564564-4564654564-879798451-849
+
+    distinguishedName : CN=Domain Admins,OU=Admin Groups,OU=Admin Accounts,DC=corp,DC=contoso,DC=com
+    name              : Domain Admins
+    objectClass       : group
+    objectGUID        : df4a56d4-347f-3876-a9be-8fdisvcajsjh
+    SamAccountName    : Domain Admins
+    SID               : S-1-5-21-4564564564-4564654564-879798451-849
 
     This example shows the use of the ListGroups switch to provide the list of the Nested AD groups instead of the users.
-    .EXAMPLE
-    PS C:\> Get-NestedADGroupMember -Identity Parent-DG -ResultSize 10
-    WARNING: There are more results available than are currently displayed. To view them, increase the value for the ResultSize parameter.
-
-    Name            RecipientType
-    ----            -------------
-    SharedMailbox14 UserMailbox
-    SharedMailbox22 UserMailbox
-    SharedMailbox23 UserMailbox
-    SharedMailbox48 UserMailbox
-    SharedMailbox78 UserMailbox
-    SharedMailbox85 UserMailbox
-
-    This example shows the use of using the Resultsize to limit the output to desired size. The default ResultSize is 1000.
 #>
     [CmdletBinding()]
     [Alias()]
