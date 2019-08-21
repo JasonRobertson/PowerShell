@@ -6,7 +6,7 @@ function Get-NestedADGroupMember
     .DESCRIPTION
     Get-NestedADGroupMember cmdlet is used to pull all members of a parent distribution group that includes nested distirbution groups.
     .EXAMPLE
-    PS C:\>  Get-NestedADGroupMember
+    PS C:\>  Get-NestedADGroupMember Administrators
 
     distinguishedName : CN=User1,OU=Contractors,OU=contoso,DC=corp,DC=contoso,DC=com
     name              : User1
@@ -23,24 +23,6 @@ function Get-NestedADGroupMember
     SID               : S-1-5-21-4564564564-4564654564-121548578-484156
 
     This example show the cmdlet being used with no additonal parameters, but Identity
-    .EXAMPLE
-    PS C:\> Get-ADGroup Administrators | Get-NestedADGroupMember
-
-    distinguishedName : CN=User1,OU=Contractors,OU=contoso,DC=corp,DC=contoso,DC=com
-    name              : User1
-    objectClass       : user
-    objectGUID        : dfadhfq1-8744-3r98-qio1-904rtf7u8dfa
-    SamAccountName    : User1
-    SID               : S-1-5-21-4564564564-4564654564-783434173-41332
-
-    distinguishedName : CN=drtsslvpn.svc,OU=Service Accounts,DC=contoso,DC=com
-    name              : ServiceAccount1
-    objectClass       : user
-    objectGUID        : 4fab9dd5-f3ac-4910-a9be-8fdisvcajsjh
-    SamAccountName    : ServiceAccount1
-    SID               : S-1-5-21-4564564564-4564654564-121548578-484156
-
-    This example show using the Get-DsitributionGroup cmdlet to verify the distirbution group exists and piping the results to Get-NestedDistributionGroup
     .EXAMPLE
     PS C:\>  Get-NestedADGroupMember -Identity Administrators -ListGroups
 
@@ -59,6 +41,24 @@ function Get-NestedADGroupMember
     SID               : S-1-5-21-4564564564-4564654564-879798451-849
 
     This example shows the use of the ListGroups switch to provide the list of the Nested AD groups instead of the users.
+    .EXAMPLE
+    PS C:\> Get-ADGroup Administrators | Get-NestedADGroupMember
+
+    distinguishedName : CN=User1,OU=Contractors,OU=contoso,DC=corp,DC=contoso,DC=com
+    name              : User1
+    objectClass       : user
+    objectGUID        : dfadhfq1-8744-3r98-qio1-904rtf7u8dfa
+    SamAccountName    : User1
+    SID               : S-1-5-21-4564564564-4564654564-783434173-41332
+
+    distinguishedName : CN=drtsslvpn.svc,OU=Service Accounts,DC=contoso,DC=com
+    name              : ServiceAccount1
+    objectClass       : user
+    objectGUID        : 4fab9dd5-f3ac-4910-a9be-8fdisvcajsjh
+    SamAccountName    : ServiceAccount1
+    SID               : S-1-5-21-4564564564-4564654564-121548578-484156
+
+    This example show using the Get-DsitributionGroup cmdlet to verify the distirbution group exists and piping the results to Get-NestedDistributionGroup
 #>
     [CmdletBinding()]
     [Alias()]
