@@ -1,0 +1,36 @@
+# methods of using a switch
+[switch]$example1 #IsPresent is set by default to False.
+$exmaple2 = $true
+$exmaple3 = $false
+$example4 = $false
+# this example shows calling out the True value and using the default for the false instance.
+Switch ($exmaple1) {
+  True {
+    Write-Output "Example 1 is set to $true"
+  }
+  default {
+    Write-Output "Example 1 is set to $false"
+  }
+}
+
+# this example shows calling out the value as True and False. Note the Default is not used at all in this example.
+Switch ($exmaple2) {
+  True {
+    Write-Output "Example 1 is set to $true"
+  }
+  False {
+    Write-Output "Example 1 is set to $false"
+  }
+}
+
+#This examples uses the Result variable to store the output of the switch. This is handy when dealing with various options for a variable.
+$Result = Switch ($exmaple3){
+  True {$true}
+  False {$false}
+}
+
+#This examples uses the Result variable to store the output of the switch. However the Result is in the action of the value of the switch. This is not an ideal solution, but may sometimes be necessary. 
+ Switch ($exmaple4){
+  True  {$Result = $true}
+  False {$Result = $false}
+}
